@@ -11,6 +11,11 @@
   <img alt="Not financial advice" src="https://img.shields.io/badge/⚠-not%20financial%20advice-f0883e">
 </p>
 
+**Published on ClawHub** — the cross-agent skill registry (Hermes + OpenClaw):
+[ask-a-legend](https://clawhub.ai/FXDavid-OffbeatForex/ask-a-legend) ·
+[convene](https://clawhub.ai/FXDavid-OffbeatForex/convene) ·
+[forge-legend](https://clawhub.ai/FXDavid-OffbeatForex/forge-legend)
+
 Three [Hermes Agent](https://hermes-agent.nousresearch.com) skills that run the
 [**Trading Legends Council (TLC)**](https://github.com/FXDavid-OffbeatForex/TLC) —
 ten schools of technical analysis (Wyckoff, Gann, Elliott, Dow, Livermore,
@@ -58,18 +63,26 @@ A split council stands aside — that is a valid outcome.
 
 ## Install
 
-**From the Hermes Hub — one command each:**
+**Hermes Agent:**
 
 ```bash
-hermes skills install FXDavid-OffbeatForex/tlc-hermes-skills/convene --yes
-hermes skills install FXDavid-OffbeatForex/tlc-hermes-skills/ask-a-legend --yes
-hermes skills install FXDavid-OffbeatForex/tlc-hermes-skills/forge-legend --yes
+hermes skills install FXDavid-OffbeatForex/convene --yes
+hermes skills install FXDavid-OffbeatForex/ask-a-legend --yes
+hermes skills install FXDavid-OffbeatForex/forge-legend --yes
 ```
 
 That's it — `hermes skills list` should now show all three. (They're
 community skills that clone the open-source TLC engine + `pip install` its one
 dependency on first run; Hermes shows a standard third-party-skill review
 prompt — `--yes` accepts it.)
+
+**OpenClaw:**
+
+```bash
+openclaw skills install @fxdavid-offbeatforex/convene
+openclaw skills install @fxdavid-offbeatforex/ask-a-legend
+openclaw skills install @fxdavid-offbeatforex/forge-legend
+```
 
 ### Alternative — local, via `external_dirs`
 
