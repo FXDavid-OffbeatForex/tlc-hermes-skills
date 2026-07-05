@@ -58,7 +58,22 @@ A split council stands aside — that is a valid outcome.
 
 ## Install
 
-**Local skills — no Hub required.**
+**From the Hermes Hub — one command each:**
+
+```bash
+hermes skills install FXDavid-OffbeatForex/tlc-hermes-skills/convene --yes
+hermes skills install FXDavid-OffbeatForex/tlc-hermes-skills/ask-a-legend --yes
+hermes skills install FXDavid-OffbeatForex/tlc-hermes-skills/forge-legend --yes
+```
+
+That's it — `hermes skills list` should now show all three. (They're
+community skills that clone the open-source TLC engine + `pip install` its one
+dependency on first run; Hermes shows a standard third-party-skill review
+prompt — `--yes` accepts it.)
+
+### Alternative — local, via `external_dirs`
+
+If you'd rather run them straight from a clone (e.g. to hack on them):
 
 ```bash
 git clone https://github.com/FXDavid-OffbeatForex/tlc-hermes-skills.git
@@ -74,11 +89,6 @@ skills:
 ```
 
 Restart Hermes — `hermes skills list` should show all three.
-
-### …or just ask Hermes (one paste)
-
-> Clone `github.com/FXDavid-OffbeatForex/tlc-hermes-skills`, add its `skills`
-> folder to my Hermes `external_dirs`, then convene EURUSD.
 
 ## Usage
 
