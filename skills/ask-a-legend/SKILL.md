@@ -119,10 +119,10 @@ Follow `tlc/legends/_single_legend_flow.md` exactly, using that legend's spec
 file as the method. Stay strictly in the legend's voice and method — if their
 setup is absent, vote FLAT; never force a trade.
 
-Platform (mt5 / TradingView) resolves per `AGENTS.md` §Platform resolution: a
-trailing `tv`/`mt5` token or a phrase like "from tradingview" forces it,
-otherwise it auto-routes by asset class, else falls back to `config.yaml`'s
-default. Fetch bars with the registered MCP tool for that platform if one is
+Platform (mt5 / TradingView) resolves like this: a trailing `tv`/`mt5` token or
+a phrase like "from tradingview" forces it, otherwise it auto-routes by asset
+class (forex/metals → mt5, stocks/crypto → tradingview), else falls back to
+`config.yaml`'s default. Fetch bars with the registered MCP tool for that platform if one is
 present in this Hermes environment, else the headless shortcut
 `python3 -m tlc.data_desk <symbol> <tf> --platform <tv|mt5>`.
 

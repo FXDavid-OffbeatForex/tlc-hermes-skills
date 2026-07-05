@@ -95,16 +95,17 @@ Still inside `$TLC_HOME`, check for config: `ls .env config.yaml 2>/dev/null`.
 
 ## 1. Build the market packet (once, shared by all legends — fairness)
 - Parse intent + normalize the symbol/timeframe (see `tlc/normalize.py`).
-- **Resolve the platform** (explicit `tv`/`mt5` token in `$ARGUMENTS` → asset-class
-  auto-route → `config.yaml` default; see `AGENTS.md` §Platform resolution) and the
-  native symbol.
+- **Resolve the platform**: an explicit `tv`/`mt5` token in `$ARGUMENTS` wins;
+  otherwise auto-route by asset class (forex/metals → mt5, stocks/crypto →
+  tradingview); otherwise fall back to `config.yaml`'s default. Then the native
+  symbol.
 - Pull bars for the frames `15m, 1h, 4h, 1d` (≈200 bars each):
   - **mt5** → the registered MCP tool for MT5 bars (MBT's `get_ohlcv`), if
     registered in this Hermes environment; else `python3 -m tlc.data_desk <symbol> <tf> --platform mt5`.
   - **tradingview** → the registered MCP tool for TradingView bars (tvremix's
     `get_ohlcv`), if registered; else the headless shortcut:
     `python3 -m tlc.data_desk <symbol> <tf> --platform tv` (needs `TVR_API_KEY`
-    in `.env` — see §0 of `AGENTS.md`).
+    in `.env` — set during first-run setup, §0b).
 - **Never fabricate market data.** If every fetch path fails (no MCP
   registered, no API key, network error, timeout), **stop and report the
   failure plainly** — which path you tried and why it failed. Do not

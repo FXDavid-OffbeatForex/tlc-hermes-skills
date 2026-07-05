@@ -122,7 +122,9 @@ invalidation rule cannot pass — that's intentional (it must be scoreable).
 
 ## 5. Audition (live smoke-test)
 Run the legend once via `tlc/legends/_single_legend_flow.md` on a sensible
-symbol/timeframe for its method (resolve the platform per `AGENTS.md`).
+symbol/timeframe for its method (resolve the platform the same way `convene`
+and `ask-a-legend` do — explicit token, else asset-class auto-route, else the
+`config.yaml` default).
 
 **Never fabricate market data.** If every fetch path fails (no MCP
 registered, no API key, network error, timeout), **stop and report the
