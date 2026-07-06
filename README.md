@@ -67,22 +67,22 @@ A split council stands aside — that is a valid outcome.
 **Hermes Agent:**
 
 ```bash
-hermes skills install FXDavid-OffbeatForex/convene --yes
-hermes skills install FXDavid-OffbeatForex/ask-a-legend --yes
-hermes skills install FXDavid-OffbeatForex/forge-legend --yes
+hermes skills install FXDavid-OffbeatForex/convene
+hermes skills install FXDavid-OffbeatForex/ask-a-legend
+hermes skills install FXDavid-OffbeatForex/forge-legend
 ```
 
 That's it — `hermes skills list` should now show all three. (They're
 community skills that clone the open-source TLC engine + `pip install` its one
-dependency on first run; Hermes shows a standard third-party-skill review
-prompt — `--yes` accepts it.)
+dependency on first run, so Hermes will run a security scan and show a
+standard third-party-skill confirmation prompt — review it and confirm with `y`.)
 
 Equivalent, via the ClawHub-namespaced form (same skills, same result):
 
 ```bash
-hermes skills install clawhub/convene --yes
-hermes skills install clawhub/ask-a-legend --yes
-hermes skills install clawhub/forge-legend --yes
+hermes skills install clawhub/convene
+hermes skills install clawhub/ask-a-legend
+hermes skills install clawhub/forge-legend
 ```
 
 **OpenClaw** (installs from the ClawHub listings —
