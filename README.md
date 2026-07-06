@@ -7,14 +7,15 @@
 <p align="center">
   <img alt="License: MIT" src="https://img.shields.io/badge/License-MIT-3ddc84.svg">
   <img alt="Hermes Agent" src="https://img.shields.io/badge/Hermes-Agent-8a63d2">
+  <img alt="OpenClaw" src="https://img.shields.io/badge/OpenClaw-ClawHub-e6533c">
   <img alt="Skills" src="https://img.shields.io/badge/skills-3-1f6feb">
   <img alt="Not financial advice" src="https://img.shields.io/badge/⚠-not%20financial%20advice-f0883e">
 </p>
 
 **Published on ClawHub** — the cross-agent skill registry (Hermes + OpenClaw):
-[ask-a-legend](https://clawhub.ai/FXDavid-OffbeatForex/ask-a-legend) ·
-[convene](https://clawhub.ai/FXDavid-OffbeatForex/convene) ·
-[forge-legend](https://clawhub.ai/FXDavid-OffbeatForex/forge-legend)
+[ask-a-legend](https://clawhub.ai/fxdavid-offbeatforex/skills/ask-a-legend) ·
+[convene](https://clawhub.ai/fxdavid-offbeatforex/skills/convene) ·
+[forge-legend](https://clawhub.ai/fxdavid-offbeatforex/skills/forge-legend)
 
 Three [Hermes Agent](https://hermes-agent.nousresearch.com) skills that run the
 [**Trading Legends Council (TLC)**](https://github.com/FXDavid-OffbeatForex/TLC) —
@@ -76,7 +77,18 @@ community skills that clone the open-source TLC engine + `pip install` its one
 dependency on first run; Hermes shows a standard third-party-skill review
 prompt — `--yes` accepts it.)
 
-**OpenClaw:**
+Equivalent, via the ClawHub-namespaced form (same skills, same result):
+
+```bash
+hermes skills install clawhub/convene --yes
+hermes skills install clawhub/ask-a-legend --yes
+hermes skills install clawhub/forge-legend --yes
+```
+
+**OpenClaw** (installs from the ClawHub listings —
+[convene](https://clawhub.ai/fxdavid-offbeatforex/skills/convene) ·
+[ask-a-legend](https://clawhub.ai/fxdavid-offbeatforex/skills/ask-a-legend) ·
+[forge-legend](https://clawhub.ai/fxdavid-offbeatforex/skills/forge-legend)):
 
 ```bash
 openclaw skills install @fxdavid-offbeatforex/convene
