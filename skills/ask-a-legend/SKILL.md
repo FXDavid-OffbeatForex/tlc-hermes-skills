@@ -1,7 +1,7 @@
 ---
 name: ask-a-legend
 description: Get one legendary trader's read on a symbol — Wyckoff, Gann, Elliott Wave, Dow Theory, Livermore, DeMark, Wilder (RSI/ADX), Ichimoku (Hosoda), Weinstein stage analysis, or O'Neil CAN SLIM. Pass the legend and symbol, e.g. "gann on eurusd" or "what would Wyckoff say about AAPL?". Analysis and a second opinion, not a signal.
-version: 0.1.0
+version: 0.2.0
 author: FXDavid (Offbeat Forex)
 license: MIT
 homepage: https://github.com/FXDavid-OffbeatForex/TLC

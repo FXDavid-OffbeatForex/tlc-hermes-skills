@@ -1,7 +1,7 @@
 ---
 name: convene
 description: Convene the Trading Legends Council — ten legendary traders (Dow, Wyckoff, Livermore, Elliott, Gann, DeMark, Wilder, Ichimoku, Weinstein, O'Neil) each vote blind on a symbol, then a deterministic Chairman aggregates their ballots into one verdict (LONG/SHORT/NO_TRADE). Analysis and a second opinion, not signals.
-version: 0.1.0
+version: 0.2.0
 author: FXDavid (Offbeat Forex)
 license: MIT
 homepage: https://github.com/FXDavid-OffbeatForex/TLC
@@ -176,13 +176,21 @@ Legends vote **independently** — do not let one legend see another's vote.
 - Save all ballots to the local sink (`data/ballots.jsonl`).
 - Run the Chairman to produce the verdict. Use the council's threshold/weights for
   a custom roster (`tlc.council.council_settings`); default threshold is `0.65`.
-  Write the ballots to a JSON array and run `python3 -m tlc.run_council <ballots.json>`,
-  or call `tlc.chairman.aggregate(ballots, threshold=…, weights=…)` directly.
+  Write the ballots to a JSON array and run
+  `python3 -m tlc.run_council <ballots.json> --alert`, or call
+  `tlc.chairman.aggregate(ballots, threshold=…, weights=…)` directly.
 - **If this is a gated run (§0c), you MUST use `run_council` (not a direct
   `aggregate()` call)** — it persists the verdict to `data/verdicts.jsonl`, which
   is exactly where `record` looks; a verdict that never lands there arms nothing
   and the gate silently stops gating. Then run the `record` phase so this verdict
   arms/clears the tracked open trade.
+- **About `--alert`:** it pushes the verdict through TLC's own alert channels
+  (`alerts.enabled` in `$TLC_HOME/config.yaml`, e.g. Telegram) — the same path
+  scheduled fires use. It is a no-op when no channel is configured there (the
+  Hermes auto-setup in §0b never enables one — Hermes normally delivers through
+  its own channel instead), and NO_TRADE respects `quiet_no_trade`, so passing it
+  unconditionally is safe and keeps alerting identical across harnesses for users
+  who DID configure TLC alerts in the shared `~/.tlc` config.
 
 ## 4. Present (mandatory — this is your final output)
 **Do not stop after collecting ballots, aggregating, or writing an internal
