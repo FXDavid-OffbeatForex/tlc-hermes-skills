@@ -93,19 +93,57 @@ Still inside `$TLC_HOME`, check for config: `ls .env config.yaml 2>/dev/null`.
   Never invent or hardcode a key; never put a real secret in `config.yaml`. Then
   continue (do not report a "config missing" failure — you just fixed it).
 
+## 0c. Open-trade gate (ONLY when the request asks for it)
+
+TLC's own scheduler (`tlc.cron`) gates every fire so it alerts **one trade at a
+time** — while the last signalled trade is still open (neither stop nor target
+hit) it skips convening entirely (no LLM call, no re-alert), and emits a single
+WIN/LOSS when it resolves. Hermes runs this convene as a raw prompt, which
+bypasses that wrapper, so the gate must be invoked here — but **only for a
+scheduled, gated run**, never for an ad-hoc "convene EURUSD".
+
+**Trigger — gate this run if, and only if, `$ARGUMENTS` asks for it:** a `--gate`
+token, or wording like "open-trade gate", "gated", "one trade at a time", "don't
+re-alert while a trade is open". A Hermes cron prompt enables it explicitly, e.g.
+*"every hour convene EURUSD 1h with the open-trade gate and send to Discord."*
+If no such signal is present, **skip this whole section** and convene normally.
+
+When gated, derive the stable schedule name (shared with `tlc.cron` state) and
+run **phase 1 (check)** before doing any other work:
+```bash
+NAME=$(python3 -c "import sys;from tlc.cron import make_name;print(make_name(sys.argv[1],sys.argv[2]))" <SYMBOL> <TF>)
+python3 -m tlc.trade_gate check "$NAME" <SYMBOL> <TF> [--platform tv|mt5]
+```
+Read its **last decision line**:
+- **`SKIP …`** → the previous trade is still open (or a fire is in flight).
+  **Stop here — do NOT build a packet, fetch data, convene, or alert.** If the
+  output also has an `OUTCOME {…}` line, a trade just resolved: relay that
+  win/loss to the user through the Hermes channel, then stop.
+- **`PROCEED …`** → clear to convene. If an `OUTCOME {…}` line is present, the
+  previous trade resolved this fire — **deliver that WIN/LOSS first** (it won't
+  come through any other channel here), then continue to §1 and convene normally.
+
+After you finish §3 (verdict aggregated + saved to `data/verdicts.jsonl`), run
+**phase 2 (record)** so the new signal becomes the tracked open trade:
+```bash
+python3 -m tlc.trade_gate record "$NAME" <SYMBOL> <TF> [--platform tv|mt5]
+```
+A LONG/SHORT verdict is now tracked; the next gated fire will skip until it
+resolves. A NO_TRADE verdict tracks nothing (the gate stays open). Run `record`
+even if the verdict was NO_TRADE — it advances the checkpoint.
+
 ## 1. Build the market packet (once, shared by all legends — fairness)
 - Parse intent + normalize the symbol/timeframe (see `tlc/normalize.py`).
-- **Resolve the platform**: an explicit `tv`/`mt5` token in `$ARGUMENTS` wins;
-  otherwise auto-route by asset class (forex/metals → mt5, stocks/crypto →
-  tradingview); otherwise fall back to `config.yaml`'s default. Then the native
-  symbol.
+- **Resolve the platform** (explicit `tv`/`mt5` token in `$ARGUMENTS` → asset-class
+  auto-route → `config.yaml` default; see `AGENTS.md` §Platform resolution) and the
+  native symbol.
 - Pull bars for the frames `15m, 1h, 4h, 1d` (≈200 bars each):
   - **mt5** → the registered MCP tool for MT5 bars (MBT's `get_ohlcv`), if
     registered in this Hermes environment; else `python3 -m tlc.data_desk <symbol> <tf> --platform mt5`.
   - **tradingview** → the registered MCP tool for TradingView bars (tvremix's
     `get_ohlcv`), if registered; else the headless shortcut:
     `python3 -m tlc.data_desk <symbol> <tf> --platform tv` (needs `TVR_API_KEY`
-    in `.env` — set during first-run setup, §0b).
+    in `.env` — see §0 of `AGENTS.md`).
 - **Never fabricate market data.** If every fetch path fails (no MCP
   registered, no API key, network error, timeout), **stop and report the
   failure plainly** — which path you tried and why it failed. Do not
@@ -116,9 +154,8 @@ Still inside `$TLC_HOME`, check for config: `ls .env config.yaml 2>/dev/null`.
   `python3 -m tlc.market_packet <frames.json> <packet.json>`.
   Every legend MUST receive this identical packet — no legend gets extra data.
 - **Deterministic indicators are per-legend, not shared.** Any legend whose spec
-  declares `needs:` computes its own exact readings in its blind step via the
-  single direct `build_market_packet` + `compute` call in
-  `tlc/legends/_single_legend_flow.md` §3b (not a hand-built packet JSON).
+  declares `needs:` computes its own exact readings in its blind step (see
+  `tlc/legends/_single_legend_flow.md` §3b: `python3 -m tlc.indicators <packet.json> --needs …`).
   Keep them out of the shared packet so no legend sees another school's numbers.
 
 ## 2. Determine the council, then collect ballots (BLIND, in parallel)
@@ -141,6 +178,11 @@ Legends vote **independently** — do not let one legend see another's vote.
   a custom roster (`tlc.council.council_settings`); default threshold is `0.65`.
   Write the ballots to a JSON array and run `python3 -m tlc.run_council <ballots.json>`,
   or call `tlc.chairman.aggregate(ballots, threshold=…, weights=…)` directly.
+- **If this is a gated run (§0c), you MUST use `run_council` (not a direct
+  `aggregate()` call)** — it persists the verdict to `data/verdicts.jsonl`, which
+  is exactly where `record` looks; a verdict that never lands there arms nothing
+  and the gate silently stops gating. Then run the `record` phase so this verdict
+  arms/clears the tracked open trade.
 
 ## 4. Present (mandatory — this is your final output)
 **Do not stop after collecting ballots, aggregating, or writing an internal
