@@ -94,6 +94,54 @@ Still inside `$TLC_HOME`, check for config: `ls .env config.yaml 2>/dev/null`.
   Never invent or hardcode a key; never put a real secret in `config.yaml`. Then
   continue to §1 (do not report a "config missing" failure — you just fixed it).
 
+## 0c. Open-trade gate (ONLY when the request asks for it)
+
+TLC's scheduler gates scheduled council fires to one open trade at a time
+(`tlc/trade_gate.py`). A **scheduled** single-legend run can opt into the same
+discipline: while this legend's last signalled trade is still open (neither
+invalidation nor target hit), a gated fire skips the analysis entirely (no LLM
+call, no re-alert), and emits a single WIN/LOSS when it resolves.
+
+**Trigger — gate this run if, and only if, `$ARGUMENTS` asks for it:** a `--gate`
+token, or wording like "open-trade gate", "gated", "one trade at a time", "don't
+re-alert while a trade is open". A Hermes cron prompt enables it explicitly, e.g.
+*"every 4 hours ask gann about EURUSD 1h with the open-trade gate."* An ad-hoc
+"gann on eurusd" is never gated — if no such signal is present, **skip this whole
+section**.
+
+When gated, resolve the legend id (§1) first, then derive the schedule name and
+run **phase 1 (check)** before doing any other work. The name embeds the legend
+id so this state never collides with the council gate on the same
+symbol/timeframe:
+```bash
+NAME=$(python3 -c "import sys;from tlc.cron import make_name;print(make_name(sys.argv[1]+'_'+sys.argv[2],sys.argv[3]))" <SYMBOL> <LEGEND_ID> <TF>)
+python3 -m tlc.trade_gate check "$NAME" <SYMBOL> <TF> [--platform tv|mt5]
+```
+Read its **last decision line**:
+- **`SKIP …`** → the previous trade is still open (or a fire is in flight).
+  **Stop here — do NOT fetch data or run the analysis.** If the output also has
+  an `OUTCOME {…}` line, a trade just resolved: relay that win/loss to the user
+  through the Hermes channel, then stop.
+- **`PROCEED …`** → clear to run. If an `OUTCOME {…}` line is present, the
+  previous trade resolved this fire — **deliver that WIN/LOSS first** (it won't
+  come through any other channel here), then continue normally.
+
+After §2 produces the ballot, arm the gate from it. The gate tracks trades via
+`data/verdicts.jsonl` — a ballot alone is invisible to it — so on a gated run
+save the ballot JSON to a temp file (e.g. `ballot.json`), emit a verdict-shaped
+line mapping `direction`→`decision` and `invalidation`→`stop`, then run
+**phase 2 (record)**:
+```bash
+python3 -c "import json,sys;from tlc.sinks import LocalJsonSink;b=json.load(open(sys.argv[1]));LocalJsonSink('data').emit_verdict({'decision':b['direction'],'entry':b.get('entry'),'stop':b.get('invalidation'),'target':b.get('target'),'symbol':b['symbol'],'timeframe':b['timeframe'],'platform':b.get('platform',''),'created_at':b.get('created_at',''),'consensus':b.get('conviction'),'rationale':b.get('thesis',''),'single_legend':b.get('legend','')})" ballot.json
+python3 -m tlc.trade_gate record "$NAME" <SYMBOL> <TF> [--platform tv|mt5]
+```
+A LONG/SHORT ballot is now tracked; the next gated fire skips until it resolves.
+A FLAT ballot tracks nothing (the gate stays open) — run both commands anyway,
+`record` advances the checkpoint either way. Do NOT run these steps on an
+un-gated run, and never emit this verdict line from inside a council convene —
+the convene skill's own §0c handles that flow, and per-legend pseudo-verdicts
+would corrupt the council's gate.
+
 ## 1. Resolve the legend id
 Map the name/nickname in `$ARGUMENTS` to an id:
 
@@ -119,10 +167,10 @@ Follow `tlc/legends/_single_legend_flow.md` exactly, using that legend's spec
 file as the method. Stay strictly in the legend's voice and method — if their
 setup is absent, vote FLAT; never force a trade.
 
-Platform (mt5 / TradingView) resolves like this: a trailing `tv`/`mt5` token or
-a phrase like "from tradingview" forces it, otherwise it auto-routes by asset
-class (forex/metals → mt5, stocks/crypto → tradingview), else falls back to
-`config.yaml`'s default. Fetch bars with the registered MCP tool for that platform if one is
+Platform (mt5 / TradingView) resolves per `AGENTS.md` §Platform resolution: a
+trailing `tv`/`mt5` token or a phrase like "from tradingview" forces it,
+otherwise it auto-routes by asset class, else falls back to `config.yaml`'s
+default. Fetch bars with the registered MCP tool for that platform if one is
 present in this Hermes environment, else the headless shortcut
 `python3 -m tlc.data_desk <symbol> <tf> --platform <tv|mt5>`.
 
